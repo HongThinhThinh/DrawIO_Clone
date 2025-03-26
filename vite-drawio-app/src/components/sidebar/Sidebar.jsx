@@ -27,7 +27,7 @@ import PropTypes from "prop-types";
 import { useEffect, useRef } from "react";
 
 function Sidebar({ setIsDragging }) {
-  const { clearCanvas, loadFlowFromJSON, getFlowObject } = useStore(
+  const { clearCanvas, loadFlowFromJSON, getFlowObject, addNode } = useStore(
     (state) => state
   );
 
@@ -114,6 +114,28 @@ function Sidebar({ setIsDragging }) {
 
     // Ngăn chặn các sự kiện mặc định có thể gây trở ngại
     event.stopPropagation();
+  };
+
+  // Thêm node mới khi click trên thiết bị di động
+  const handleNodeClick = (nodeType) => {
+    if (isMobile) {
+      // Tạo vị trí mặc định ở giữa màn hình
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      // Thêm node mới vào canvas
+      addNode(nodeType, { x: centerX - 120, y: centerY - 50 });
+
+      // Trigger sự kiện nodeAdd để thêm hiệu ứng phản hồi
+      window.dispatchEvent(new CustomEvent("nodeAdd"));
+
+      // Ẩn sidebar sau khi thêm node
+      if (setIsDragging) {
+        // Sử dụng lại cơ chế xử lý của dragend
+        const dragEndEvent = new Event("dragend");
+        window.dispatchEvent(dragEndEvent);
+      }
+    }
   };
 
   // Xử lý lưu flow hiện tại
@@ -246,6 +268,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "rectangle")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("rectangle")}
                   draggable="true"
                 >
                   <RectangleIcon className="dndnode-icon" color="primary" />
@@ -258,6 +281,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "circle")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("circle")}
                   draggable="true"
                 >
                   <CircleIcon className="dndnode-icon" color="primary" />
@@ -270,6 +294,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "stadium")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("stadium")}
                   draggable="true"
                 >
                   <HorizontalRuleIcon
@@ -285,6 +310,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "hexagon")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("hexagon")}
                   draggable="true"
                 >
                   <HexagonIcon className="dndnode-icon" color="primary" />
@@ -318,6 +344,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "terminator")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("terminator")}
                   draggable="true"
                 >
                   <StopIcon className="dndnode-icon" color="primary" />
@@ -330,6 +357,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "process")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("process")}
                   draggable="true"
                 >
                   <RectangleIcon className="dndnode-icon" color="primary" />
@@ -342,6 +370,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "decision")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("decision")}
                   draggable="true"
                 >
                   <DiamondIcon className="dndnode-icon" color="primary" />
@@ -354,6 +383,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "io")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("io")}
                   draggable="true"
                 >
                   <PlayArrowIcon className="dndnode-icon" color="primary" />
@@ -366,6 +396,7 @@ function Sidebar({ setIsDragging }) {
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "document")}
                   onDragEnd={onDragEnd}
+                  onClick={() => handleNodeClick("document")}
                   draggable="true"
                 >
                   <DescriptionIcon className="dndnode-icon" color="primary" />

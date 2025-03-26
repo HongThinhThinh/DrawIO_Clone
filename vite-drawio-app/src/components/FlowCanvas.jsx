@@ -263,12 +263,46 @@ function FlowCanvas() {
       // Thêm node mới vào store
       addNode(type, position);
 
+      // Hiệu ứng phản hồi khi drop thành công
+      addDropFeedback();
+
       // Đảm bảo backdrop sẽ biến mất sau khi drop
       const dragEndEvent = new Event("dragend");
       window.dispatchEvent(dragEndEvent);
     },
     [addNode, project]
   );
+
+  // Thêm hiệu ứng phản hồi khi node được thêm vào canvas
+  const addDropFeedback = useCallback(() => {
+    if (reactFlowWrapper.current) {
+      const pane = reactFlowWrapper.current.querySelector(".react-flow__pane");
+      if (pane) {
+        // Thêm class để trigger animation
+        pane.classList.add("tap-feedback");
+
+        // Xóa class sau khi animation kết thúc
+        setTimeout(() => {
+          pane.classList.remove("tap-feedback");
+        }, 500);
+      }
+    }
+  }, []);
+
+  // Hook lắng nghe sự kiện nodeAdd để thêm hiệu ứng phản hồi khi node được thêm qua click
+  useEffect(() => {
+    const handleNodeAdd = () => {
+      // Thêm hiệu ứng phản hồi khi node được thêm
+      addDropFeedback();
+    };
+
+    // Lắng nghe sự kiện custom 'nodeAdd'
+    window.addEventListener("nodeAdd", handleNodeAdd);
+
+    return () => {
+      window.removeEventListener("nodeAdd", handleNodeAdd);
+    };
+  }, [addDropFeedback]);
 
   // Xử lý chọn các phần tử
   const onSelectionChange = ({ nodes, edges }) => {
