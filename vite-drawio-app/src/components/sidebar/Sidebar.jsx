@@ -6,6 +6,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
+  IconButton,
+  useMediaQuery,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RectangleIcon from "@mui/icons-material/Crop169";
@@ -17,20 +19,101 @@ import StopIcon from "@mui/icons-material/Stop";
 import DescriptionIcon from "@mui/icons-material/Description";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import HexagonIcon from "@mui/icons-material/Hexagon";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import useStore from "../../store/useStore";
+import PropTypes from "prop-types";
+import { useEffect, useRef } from "react";
 
-function Sidebar() {
+function Sidebar({ setIsDragging }) {
   const { clearCanvas, loadFlowFromJSON, getFlowObject } = useStore(
     (state) => state
   );
 
+  // Kiểm tra xem thiết bị có phải là thiết bị di động không
+  const isMobile = useMediaQuery("(max-width:768px)");
+
+  // Ref cho phần tử đang được kéo
+  const dragImageRef = useRef(null);
+
+  // Thêm class vào body khi đang kéo thả để vô hiệu hóa các tương tác không cần thiết
+  useEffect(() => {
+    const handleDragStart = () => {
+      document.body.classList.add("dragging");
+    };
+
+    const handleDragEnd = () => {
+      document.body.classList.remove("dragging");
+    };
+
+    window.addEventListener("dragstart", handleDragStart);
+    window.addEventListener("dragend", handleDragEnd);
+    window.addEventListener("drop", handleDragEnd);
+
+    return () => {
+      window.removeEventListener("dragstart", handleDragStart);
+      window.removeEventListener("dragend", handleDragEnd);
+      window.removeEventListener("drop", handleDragEnd);
+      document.body.classList.remove("dragging");
+    };
+  }, []);
+
+  // Tạo hình ảnh kéo cho mobile
+  useEffect(() => {
+    if (!dragImageRef.current) {
+      const img = new Image();
+      img.src =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 1px transparent GIF
+      img.style.opacity = "0";
+      document.body.appendChild(img);
+      dragImageRef.current = img;
+    }
+
+    return () => {
+      if (dragImageRef.current) {
+        document.body.removeChild(dragImageRef.current);
+      }
+    };
+  }, []);
+
   const onDragStart = (event, nodeType) => {
+    // Thiết lập dữ liệu kéo thả
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
+
+    // Đặt hình ảnh kéo thả không nhìn thấy để tránh bị nhấp nháy trên mobile
+    if (dragImageRef.current) {
+      event.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
+    }
+
+    if (setIsDragging) {
+      setIsDragging(true);
+    }
+
+    // Thêm hiệu ứng khi bắt đầu kéo (chỉ trên mobile)
+    if (isMobile && event.target) {
+      event.target.style.transform = "scale(0.98)";
+      event.target.style.opacity = "0.8";
+    }
+
+    // Ngăn chặn các sự kiện mặc định có thể gây trở ngại
+    event.stopPropagation();
+  };
+
+  const onDragEnd = (event) => {
+    if (setIsDragging) {
+      setIsDragging(false);
+    }
+
+    // Khôi phục style khi kết thúc kéo
+    if (isMobile && event.target) {
+      event.target.style.transform = "";
+      event.target.style.opacity = "";
+    }
+
+    // Ngăn chặn các sự kiện mặc định có thể gây trở ngại
+    event.stopPropagation();
   };
 
   // Xử lý lưu flow hiện tại
@@ -74,30 +157,36 @@ function Sidebar() {
         <AccountTreeIcon
           color="primary"
           className="sidebar-logo"
-          fontSize="large"
+          fontSize={isMobile ? "medium" : "large"}
         />
-        <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant={isMobile ? "subtitle1" : "h6"}
+          color="primary"
+          sx={{ fontWeight: 600 }}
+        >
           Hong Thinh
         </Typography>
       </div>
 
-      <Divider style={{ margin: "10px 0 15px" }} />
+      <Divider style={{ margin: isMobile ? "5px 0 10px" : "10px 0 15px" }} />
 
       <div className="file-actions">
         <Button
           variant="outlined"
           color="primary"
           size="small"
-          startIcon={<CloudDownloadIcon />}
+          startIcon={isMobile ? null : <CloudDownloadIcon />}
           onClick={handleSaveFlow}
-          fullWidth
-          style={{ marginBottom: "8px" }}
+          fullWidth={!isMobile}
+          style={{ marginBottom: isMobile ? "0" : "8px" }}
           sx={{
             color: "var(--text-dark)",
             borderColor: "var(--primary-color)",
+            padding: isMobile ? "4px 8px" : "6px 16px",
+            fontSize: isMobile ? "0.75rem" : "0.875rem",
           }}
         >
-          Save Diagram
+          {isMobile ? <CloudDownloadIcon fontSize="small" /> : "Save Diagram"}
         </Button>
 
         <Button
@@ -105,42 +194,59 @@ function Sidebar() {
           component="label"
           color="primary"
           size="small"
-          startIcon={<CloudUploadIcon />}
-          fullWidth
-          style={{ marginBottom: "15px" }}
+          startIcon={isMobile ? null : <CloudUploadIcon />}
+          fullWidth={!isMobile}
+          style={{ marginBottom: isMobile ? "0" : "15px" }}
           sx={{
             color: "var(--text-dark)",
             borderColor: "var(--primary-color)",
+            padding: isMobile ? "4px 8px" : "6px 16px",
+            fontSize: isMobile ? "0.75rem" : "0.875rem",
           }}
         >
-          Load Diagram
+          {isMobile ? <CloudUploadIcon fontSize="small" /> : "Load Diagram"}
           <input type="file" accept=".json" hidden onChange={handleLoadFlow} />
         </Button>
+
+        <IconButton
+          color="error"
+          size="small"
+          onClick={clearCanvas}
+          sx={{
+            display: isMobile ? "flex" : "none",
+          }}
+        >
+          <DeleteSweepIcon fontSize="small" />
+        </IconButton>
       </div>
 
-      <Divider style={{ margin: "0 0 15px" }} />
+      <Divider style={{ margin: isMobile ? "10px 0" : "0 0 15px" }} />
 
       <div className="node-categories">
-        <Accordion defaultExpanded>
+        <Accordion defaultExpanded={!isMobile}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="basic-shapes-content"
             id="basic-shapes-header"
+            sx={{ minHeight: isMobile ? "40px" : "48px" }}
           >
             <Typography
-              variant="subtitle2"
+              variant={isMobile ? "body2" : "subtitle2"}
               sx={{ color: "var(--text-dark)", fontWeight: 600 }}
             >
               Basic Shapes
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
+          <AccordionDetails
+            sx={{ padding: isMobile ? "4px 8px 8px" : "8px 16px 16px" }}
+          >
             <div className="node-section">
               <Tooltip title="Rectangle">
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "rectangle")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
                   <RectangleIcon className="dndnode-icon" color="primary" />
                   Rectangle
@@ -151,7 +257,8 @@ function Sidebar() {
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "circle")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
                   <CircleIcon className="dndnode-icon" color="primary" />
                   Circle
@@ -162,7 +269,8 @@ function Sidebar() {
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "stadium")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
                   <HorizontalRuleIcon
                     className="dndnode-icon"
@@ -176,7 +284,8 @@ function Sidebar() {
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "hexagon")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
                   <HexagonIcon className="dndnode-icon" color="primary" />
                   Hexagon
@@ -186,28 +295,32 @@ function Sidebar() {
           </AccordionDetails>
         </Accordion>
 
-        <Accordion defaultExpanded>
+        <Accordion defaultExpanded={!isMobile}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="flowchart-shapes-content"
             id="flowchart-shapes-header"
+            sx={{ minHeight: isMobile ? "40px" : "48px" }}
           >
             <Typography
-              variant="subtitle2"
+              variant={isMobile ? "body2" : "subtitle2"}
               sx={{ color: "var(--text-dark)", fontWeight: 600 }}
             >
               Flowchart Elements
             </Typography>
           </AccordionSummary>
-          <AccordionDetails>
+          <AccordionDetails
+            sx={{ padding: isMobile ? "4px 8px 8px" : "8px 16px 16px" }}
+          >
             <div className="node-section">
               <Tooltip title="Start/End">
                 <div
                   className="dndnode"
-                  onDragStart={(event) => onDragStart(event, "start")}
-                  draggable
+                  onDragStart={(event) => onDragStart(event, "terminator")}
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
-                  <PlayArrowIcon className="dndnode-icon" color="primary" />
+                  <StopIcon className="dndnode-icon" color="primary" />
                   Start/End
                 </div>
               </Tooltip>
@@ -216,9 +329,10 @@ function Sidebar() {
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "process")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
-                  <DescriptionIcon className="dndnode-icon" color="primary" />
+                  <RectangleIcon className="dndnode-icon" color="primary" />
                   Process
                 </div>
               </Tooltip>
@@ -227,56 +341,63 @@ function Sidebar() {
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "decision")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
-                  <HorizontalRuleIcon
-                    className="dndnode-icon"
-                    color="primary"
-                  />
+                  <DiamondIcon className="dndnode-icon" color="primary" />
                   Decision
                 </div>
               </Tooltip>
 
-              <Tooltip title="Input/Output">
+              <Tooltip title="I/O">
                 <div
                   className="dndnode"
                   onDragStart={(event) => onDragStart(event, "io")}
-                  draggable
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
-                  <AutoAwesomeIcon className="dndnode-icon" color="primary" />
+                  <PlayArrowIcon className="dndnode-icon" color="primary" />
                   Input/Output
                 </div>
               </Tooltip>
 
-              <Tooltip title="Terminator">
+              <Tooltip title="Document">
                 <div
                   className="dndnode"
-                  onDragStart={(event) => onDragStart(event, "terminator")}
-                  draggable
+                  onDragStart={(event) => onDragStart(event, "document")}
+                  onDragEnd={onDragEnd}
+                  draggable="true"
                 >
-                  <StopIcon className="dndnode-icon" color="primary" />
-                  Terminator
+                  <DescriptionIcon className="dndnode-icon" color="primary" />
+                  Document
                 </div>
               </Tooltip>
             </div>
           </AccordionDetails>
         </Accordion>
+
+        {!isMobile && (
+          <>
+            <Divider style={{ margin: "15px 0" }} />
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              fullWidth
+              onClick={clearCanvas}
+              startIcon={<DeleteSweepIcon />}
+            >
+              Clear Canvas
+            </Button>
+          </>
+        )}
       </div>
-
-      <Divider style={{ margin: "15px 0" }} />
-
-      <Button
-        variant="contained"
-        color="error"
-        size="small"
-        fullWidth
-        onClick={clearCanvas}
-        startIcon={<DeleteSweepIcon />}
-      >
-        Clear Canvas
-      </Button>
     </aside>
   );
 }
+
+Sidebar.propTypes = {
+  setIsDragging: PropTypes.func.isRequired,
+};
 
 export default Sidebar;

@@ -1,1 +1,154 @@
 /* Các styles chính đã được định nghĩa trong index.css */
+
+.mobile-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1000;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.mobile-toggle.active {
+    left: 270px;
+}
+
+.sidebar-container {
+    height: 100vh;
+    transition: transform 0.3s ease-in-out;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 260px;
+    max-width: 80vw;
+}
+
+.sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+    animation: fadeIn 0.2s ease-in-out;
+    pointer-events: none;
+}
+
+.sidebar-backdrop.with-drag {
+    pointer-events: none;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-toggle {
+        display: flex;
+    }
+
+    .app-container {
+        position: relative;
+    }
+
+    .sidebar-container {
+        max-height: 30vh;
+        transition: transform 0.3s ease-in-out;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 100;
+        width: 260px;
+        max-width: 80vw;
+    }
+
+    .sidebar-container.hidden {
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+
+    .sidebar {
+        position: relative;
+        height: 100vh;
+        width: 100%;
+        overflow-y: auto;
+        background-color: var(--bg-light);
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        padding: 16px 12px;
+    }
+
+    /* Điều chỉnh thanh cuộn trên touch device */
+    .sidebar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    /* Fix kéo thả các phần tử trên mobile */
+    .dndnode {
+        touch-action: none !important;
+        -webkit-user-drag: element !important;
+        user-select: none !important;
+    }
+
+    /* Cải thiện hiển thị khi kéo thả */
+    .dndnode:active {
+        opacity: 0.8;
+        transform: scale(0.95);
+    }
+
+    /* Vô hiệu hóa các sự kiện khi đang kéo */
+    body.dragging {
+        touch-action: none;
+        user-select: none;
+    }
+
+    /* Làm cho vùng drop dễ thấy hơn */
+    .react-flow__pane.drag-over {
+        background-color: rgba(200, 230, 255, 0.3);
+        cursor: copy !important;
+    }
+
+    /* Đảm bảo các node có thể được kéo thả */
+    .react-flow__node {
+        touch-action: none;
+        -webkit-user-drag: element;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-toggle {
+        display: none;
+    }
+
+    .sidebar-container {
+        width: 240px;
+        min-width: 240px;
+    }
+}
+
+/* Điều chỉnh khoảng cách khi đóng sidebar trên mobile */
+@media (max-width: 768px) {
+    .app-container .react-flow__controls {
+        left: 10px;
+        transition: left 0.3s ease;
+    }
+
+    .app-container .sidebar-container.hidden~.react-flow-provider .react-flow__controls {
+        left: 10px;
+    }
+}

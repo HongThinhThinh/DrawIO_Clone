@@ -220,6 +220,13 @@ function FlowCanvas() {
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
+
+    // Thêm class để tạo hiệu ứng khi kéo qua
+    if (reactFlowWrapper.current) {
+      reactFlowWrapper.current
+        .querySelector(".react-flow__pane")
+        ?.classList.add("drag-over");
+    }
   }, []);
 
   // Xử lý khi drop node
@@ -227,11 +234,21 @@ function FlowCanvas() {
     (event) => {
       event.preventDefault();
 
+      // Xóa class hiệu ứng kéo qua
+      if (reactFlowWrapper.current) {
+        reactFlowWrapper.current
+          .querySelector(".react-flow__pane")
+          ?.classList.remove("drag-over");
+      }
+
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const type = event.dataTransfer.getData("application/reactflow");
 
+      console.log("Drop detected, node type:", type);
+
       // Kiểm tra nếu type hợp lệ
       if (typeof type === "undefined" || !type) {
+        console.log("No valid node type found in drop event");
         return;
       }
 
@@ -241,8 +258,14 @@ function FlowCanvas() {
         y: event.clientY - reactFlowBounds.top,
       });
 
+      console.log("Dropping at position:", position);
+
       // Thêm node mới vào store
       addNode(type, position);
+
+      // Đảm bảo backdrop sẽ biến mất sau khi drop
+      const dragEndEvent = new Event("dragend");
+      window.dispatchEvent(dragEndEvent);
     },
     [addNode, project]
   );
